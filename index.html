@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RACI Matrix Lab</title>
+<style>
+:root{
+  --bg:#f4f7fb;
+  --panel:#ffffff;
+  --ink:#172033;
+  --muted:#667085;
+  --line:#dfe5ee;
+  --accent:#3157d5;
+  --accent2:#eef2ff;
+  --good:#18794e;
+  --warn:#b54708;
+  --danger:#b42318;
+  --shadow:0 10px 30px rgba(24,39,75,.08);
+  --radius:16px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color:var(--ink);
+  background:var(--bg);
+}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app-shell{max-width:1600px;margin:0 auto;padding:18px}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  background:linear-gradient(135deg,#13254e,#3157d5);
+  color:#fff;padding:18px 22px;border-radius:20px;box-shadow:var(--shadow);
+}
+.brand h1{margin:0;font-size:24px}
+.brand p{margin:5px 0 0;color:#dce4ff;font-size:13px}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{
+  border:1px solid transparent;border-radius:10px;padding:9px 13px;background:#fff;color:#1f2a44;
+  font-weight:700;font-size:13px;
+}
+.btn.secondary{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.btn.soft{background:var(--accent2);color:var(--accent)}
+.btn.danger{background:#fff1f0;color:var(--danger);border-color:#ffd2cf}
+.tabs{display:flex;gap:8px;margin:16px 0}
+.tab{
+  border:0;background:#e9eef7;color:#475467;padding:11px 16px;border-radius:10px;font-weight:800
+}
+.tab.active{background:#fff;color:var(--accent);box-shadow:var(--shadow)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+.grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:16px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.sidebar{padding:16px;position:sticky;top:12px}
+.project-card{
+  background:#f8faff;border:1px solid #dce4ff;border-radius:14px;padding:14px;margin-bottom:14px
+}
+.project-card h2{font-size:18px;margin:0 0 8px}
+.meta{display:grid;gap:7px;font-size:13px;color:#475467}
+.meta strong{color:#1d2939}
+.section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px 0 8px}
+.section-title h3{font-size:14px;margin:0}
+.role-list,.activity-list{display:grid;gap:8px}
+.role-chip,.activity-item{
+  border:1px solid var(--line);border-radius:11px;padding:10px;background:#fff;
+}
+.role-chip{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.role-chip .name,.activity-item .name{font-size:13px;font-weight:800}
+.role-chip .sub,.activity-item .sub{font-size:11px;color:var(--muted);margin-top:2px}
+.small-btn{
+  border:0;border-radius:8px;padding:6px 8px;background:var(--accent2);color:var(--accent);font-size:12px;font-weight:800
+}
+.input-group{display:grid;gap:5px;margin-bottom:8px}
+label{font-size:11px;color:#667085;font-weight:700}
+input,select{
+  width:100%;border:1px solid #cfd7e6;border-radius:9px;padding:8px;background:#fff;color:var(--ink)
+}
+.hint,.tip-card{
+  margin-top:12px;padding:10px 11px;border-radius:10px;font-size:12px;line-height:1.5
+}
+.hint{background:#f8fafc;color:#475467;border:1px solid #eaecf0}
+.tip-card{background:#fffaf0;border:1px solid #f7d7a8;color:#7a4d0b}
+.workspace{overflow:hidden}
+.toolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  padding:14px;border-bottom:1px solid var(--line)
+}
+.toolbar-left,.toolbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.kpi{
+  background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px
+}
+.kpi strong{display:block;font-size:16px;color:#1d2939}
+.matrix-wrap{overflow:auto}
+.matrix{
+  width:max-content;min-width:100%;border-collapse:separate;border-spacing:0
+}
+.matrix th,.matrix td{
+  border-right:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  text-align:center;
+}
+.matrix th{
+  background:#f8fafc;color:#475467;font-size:12px;font-weight:800;padding:10px;
+  position:sticky;top:0;z-index:8;
+}
+.matrix th:first-child{
+  left:0;z-index:10;min-width:240px;text-align:left;
+}
+.matrix td:first-child{
+  position:sticky;left:0;background:#fff;z-index:5;text-align:left;
+  padding:10px 12px;min-width:240px;
+}
+.matrix td.role-cell{min-width:120px;padding:8px;background:#fff}
+.matrix .activity-name{font-size:13px;font-weight:800}
+.matrix .activity-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.raci-select{
+  width:74px;border-radius:9px;padding:7px 5px;text-align:center;font-weight:900
+}
+.raci-R{background:#eef2ff;color:#3157d5;border-color:#c7d2fe}
+.raci-A{background:#ecfdf3;color:#18794e;border-color:#abefc6}
+.raci-C{background:#fff7ed;color:#b54708;border-color:#fed7aa}
+.raci-I{background:#f2f4f7;color:#475467;border-color:#d0d5dd}
+.raci-empty{background:#fff;color:#98a2b3}
+.legend{display:flex;gap:8px;flex-wrap:wrap;padding:14px;border-top:1px solid var(--line);background:#fbfcfe}
+.legend span{
+  display:inline-flex;gap:6px;align-items:center;padding:6px 9px;border-radius:999px;
+  border:1px solid var(--line);font-size:12px;background:#fff
+}
+.badge{
+  min-width:26px;text-align:center;padding:3px 6px;border-radius:999px;font-weight:900
+}
+.badge.R{background:#eef2ff;color:#3157d5}
+.badge.A{background:#ecfdf3;color:#18794e}
+.badge.C{background:#fff7ed;color:#b54708}
+.badge.I{background:#f2f4f7;color:#475467}
+.analysis{
+  padding:14px;border-top:1px solid var(--line);background:#fff
+}
+.analysis-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px
+}
+.analysis-card{
+  border:1px solid var(--line);border-radius:12px;padding:12px;background:#f8fafc
+}
+.analysis-card h4{margin:0 0 6px;font-size:13px}
+.analysis-card p{margin:0;font-size:12px;color:#667085;line-height:1.45}
+.status-ok{color:var(--good)!important}
+.status-warn{color:var(--warn)!important}
+.status-danger{color:var(--danger)!important}
+.print-header{display:none}
+.footer-note{font-size:11px;color:#98a2b3;margin-top:10px;text-align:center}
+.modal{
+  position:fixed;inset:0;background:rgba(13,23,44,.45);display:none;align-items:center;justify-content:center;
+  padding:18px;z-index:100
+}
+.modal.open{display:flex}
+.modal-card{background:#fff;width:min(520px,100%);border-radius:16px;box-shadow:var(--shadow);padding:18px}
+.modal-card h3{margin:0 0 12px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+@media(max-width:980px){
+  .grid{grid-template-columns:1fr}
+  .sidebar{position:static}
+  .analysis-grid{grid-template-columns:1fr}
+}
+@media print{
+  @page{size:A4 landscape;margin:12mm}
+  body{background:#fff}
+  .topbar,.tabs,.sidebar,.toolbar,.legend,.analysis,.footer-note{display:none!important}
+  .app-shell{max-width:none;padding:0}
+  .panel{border:0;box-shadow:none}
+  .print-header{display:block;margin-bottom:10px}
+  .print-header h1{margin:0 0 4px;font-size:22px}
+  .print-header p{margin:2px 0;font-size:12px}
+  .matrix-wrap{overflow:visible}
+  .matrix{width:100%;font-size:10px}
+  .matrix th,.matrix td{position:static!important}
+  .matrix th:first-child,.matrix td:first-child{min-width:150px}
+  .matrix td.role-cell{min-width:70px}
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand">
+      <h1>RACI Matrix Lab</h1>
+      <p>Assign project roles clearly using Responsible, Accountable, Consulted and Informed.</p>
+    </div>
+    <div class="top-actions">
+      <button class="btn secondary" onclick="saveAll()">Save</button>
+      <button class="btn secondary" onclick="loadAll()">Load</button>
+      <button class="btn" onclick="window.print()">Print / PDF</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="seminar">1. University Seminar Exercise</button>
+    <button class="tab" data-tab="lab">2. General RACI Lab</button>
+  </nav>
+
+  <section id="seminar" class="tab-pane active"></section>
+  <section id="lab" class="tab-pane"></section>
+  <div class="footer-note">Runs entirely in the browser. Suitable for GitHub Pages.</div>
+</div>
+
+<div class="modal" id="editModal">
+  <div class="modal-card">
+    <h3 id="editTitle">Edit</h3>
+    <div class="input-group">
+      <label>Name</label>
+      <input id="editName" />
+    </div>
+    <div class="input-group">
+      <label>Description</label>
+      <input id="editDesc" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn soft" onclick="closeEdit()">Cancel</button>
+      <button class="btn" style="background:#3157d5;color:#fff" onclick="applyEdit()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const seminarActivities = [
+  "Budget & Objectives","Venue Booking","Invite Speakers","Marketing",
+  "Registration","Materials","Event Day","Post-mortem"
+];
+
+const seminarRoles = [
+  ["Project Manager","Coordinates the overall seminar project"],
+  ["Finance Lead","Handles budget and purchasing matters"],
+  ["Venue Coordinator","Manages venue and operational arrangements"],
+  ["Marketing Lead","Manages promotion and communications"],
+  ["Registration Lead","Manages attendee registration"],
+  ["Event Team","Supports preparation and event delivery"]
+];
+
+const state = {
+  seminar:{
+    title:"University Seminar Project",
+    objective:"Organise a professional university seminar.",
+    student:"",
+    activities:seminarActivities.map((name,i)=>({id:"sa"+i,name,desc:""})),
+    roles:seminarRoles.map((r,i)=>({id:"sr"+i,name:r[0],desc:r[1]})),
+    assignments:{}
+  },
+  lab:{
+    title:"My Project",
+    objective:"Build a clear RACI matrix for your own project.",
+    student:"",
+    activities:[
+      {id:"la1",name:"Activity 1",desc:""},
+      {id:"la2",name:"Activity 2",desc:""}
+    ],
+    roles:[
+      {id:"lr1",name:"Project Manager",desc:""},
+      {id:"lr2",name:"Team Member",desc:""}
+    ],
+    assignments:{}
+  }
+};
+
+let currentTab="seminar";
+let editing=null;
+
+function escapeHtml(s){
+  return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+function escapeAttr(s){return escapeHtml(s)}
+function key(a,r){return a+"__"+r}
+
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click",()=>setTab(btn.dataset.tab));
+});
+
+function setTab(tab){
+  currentTab=tab;
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+  document.querySelectorAll(".tab-pane").forEach(p=>p.classList.toggle("active",p.id===tab));
+  render(tab);
+}
+
+function getStats(tab){
+  const p=state[tab];
+  let totalAssigned=0, tasksWithA=0, tasksWithR=0, multiA=0, blankTasks=0;
+  p.activities.forEach(a=>{
+    let aCount=0,rCount=0,any=0;
+    p.roles.forEach(r=>{
+      const v=p.assignments[key(a.id,r.id)]||"";
+      if(v){totalAssigned++;any++}
+      if(v==="A")aCount++;
+      if(v==="R")rCount++;
+    });
+    if(aCount>0)tasksWithA++;
+    if(rCount>0)tasksWithR++;
+    if(aCount>1)multiA++;
+    if(any===0)blankTasks++;
+  });
+  return {totalAssigned,tasksWithA,tasksWithR,multiA,blankTasks};
+}
+
+function render(tab){
+  const root=document.getElementById(tab);
+  const p=state[tab];
+  const stats=getStats(tab);
+
+  root.innerHTML=`
+    <div class="print-header">
+      <h1>${escapeHtml(p.title)} — RACI Matrix</h1>
+      <p><strong>Objective:</strong> ${escapeHtml(p.objective)}</p>
+      <p><strong>Student / Group:</strong> ${escapeHtml(p.student||"________________________")}</p>
+    </div>
+
+    <div class="grid">
+      <aside class="panel sidebar">
+        <div class="project-card">
+          <h2>${escapeHtml(p.title)}</h2>
+          <div class="meta">
+            <div><strong>Objective:</strong> ${escapeHtml(p.objective)}</div>
+            ${tab==="seminar" ? `<div><strong>Approach:</strong> Build and justify your own RACI allocation. No fixed answer is enforced.</div>` : ""}
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Student / Group</label>
+          <input value="${escapeAttr(p.student)}" oninput="state['${tab}'].student=this.value" placeholder="Enter name or group">
+        </div>
+
+        ${tab==="lab" ? `
+          <div class="input-group">
+            <label>Project title</label>
+            <input value="${escapeAttr(p.title)}" onchange="state.lab.title=this.value;render('lab')">
+          </div>
+          <div class="input-group">
+            <label>Objective</label>
+            <input value="${escapeAttr(p.objective)}" onchange="state.lab.objective=this.value;render('lab')">
+          </div>
+        `:""}
+
+        <div class="section-title"><h3>RACI Guide</h3></div>
+        <div class="tip-card">
+          <strong>R — Responsible</strong><br>
+          Does the work.<br><br>
+          <strong>A — Accountable</strong><br>
+          Owns the final result or decision.<br><br>
+          <strong>C — Consulted</strong><br>
+          Provides input before or during the work.<br><br>
+          <strong>I — Informed</strong><br>
+          Kept updated on progress or outcome.
+        </div>
+
+        <div class="hint">
+          A common teaching rule is to aim for at least one <strong>R</strong> and usually one clear <strong>A</strong> per activity. Use judgement rather than filling every cell.
+        </div>
+
+        ${tab==="lab" ? `
+          <div class="section-title"><h3>Build your matrix</h3></div>
+          <button class="btn soft" style="width:100%;margin-bottom:8px" onclick="addActivity()">+ Add Activity</button>
+          <button class="btn soft" style="width:100%" onclick="addRole()">+ Add Role</button>
+        `:""}
+      </aside>
+
+      <main class="panel workspace">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <div class="kpi"><span>Activities</span><strong>${p.activities.length}</strong></div>
+            <div class="kpi"><span>Roles</span><strong>${p.roles.length}</strong></div>
+            <div class="kpi"><span>Assignments</span><strong>${stats.totalAssigned}</strong></div>
+          </div>
+          <div class="toolbar-right">
+            ${tab==="lab" ? `<button class="btn soft" onclick="clearAssignments('lab')">Clear assignments</button>` : ""}
+            <button class="btn soft" onclick="resetProject('${tab}')">Reset</button>
+            <button class="btn" style="background:#3157d5;color:#fff" onclick="window.print()">Print / PDF</button>
+          </div>
+        </div>
+
+        <div class="matrix-wrap">
+          <table class="matrix">
+            <thead>
+              <tr>
+                <th>Activity</th>
+                ${p.roles.map(r=>`
+                  <th>
+                    ${escapeHtml(r.name)}
+                    ${tab==="lab" ? `<div style="margin-top:5px"><button class="small-btn" onclick="openEdit('${tab}','role','${r.id}')">Edit</button></div>` : ""}
+                  </th>`).join("")}
+              </tr>
+            </thead>
+            <tbody>
+              ${p.activities.map(a=>`
+                <tr>
+                  <td>
+                    <div class="activity-name">${escapeHtml(a.name)}</div>
+                    ${a.desc?`<div class="activity-sub">${escapeHtml(a.desc)}</div>`:""}
+                    ${tab==="lab" ? `<div style="margin-top:5px"><button class="small-btn" onclick="openEdit('${tab}','activity','${a.id}')">Edit</button></div>` : ""}
+                  </td>
+                  ${p.roles.map(r=>{
+                    const val=p.assignments[key(a.id,r.id)]||"";
+                    return `<td class="role-cell">
+                      <select class="raci-select ${val?`raci-${val}`:"raci-empty"}"
+                        onchange="setRaci('${tab}','${a.id}','${r.id}',this.value)">
+                        <option value="" ${!val?"selected":""}>—</option>
+                        <option value="R" ${val==="R"?"selected":""}>R</option>
+                        <option value="A" ${val==="A"?"selected":""}>A</option>
+                        <option value="C" ${val==="C"?"selected":""}>C</option>
+                        <option value="I" ${val==="I"?"selected":""}>I</option>
+                      </select>
+                    </td>`;
+                  }).join("")}
+                </tr>`).join("")}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="legend">
+          <span><b class="badge R">R</b> Responsible</span>
+          <span><b class="badge A">A</b> Accountable</span>
+          <span><b class="badge C">C</b> Consulted</span>
+          <span><b class="badge I">I</b> Informed</span>
+        </div>
+
+        <div class="analysis">
+          <div class="section-title"><h3>Matrix Review</h3><span style="font-size:11px;color:#98a2b3">Guidance only</span></div>
+          <div class="analysis-grid">
+            <div class="analysis-card">
+              <h4>Responsible coverage</h4>
+              <p class="${stats.tasksWithR===p.activities.length?'status-ok':'status-warn'}">${stats.tasksWithR} of ${p.activities.length} activities have at least one R.</p>
+            </div>
+            <div class="analysis-card">
+              <h4>Accountability coverage</h4>
+              <p class="${stats.tasksWithA===p.activities.length?'status-ok':'status-warn'}">${stats.tasksWithA} of ${p.activities.length} activities have at least one A.</p>
+            </div>
+            <div class="analysis-card">
+              <h4>Potential ambiguity</h4>
+              <p class="${stats.multiA===0?'status-ok':'status-danger'}">${stats.multiA===0?'No activity has multiple A assignments.':stats.multiA+' activit'+(stats.multiA===1?'y has':'ies have')+' multiple A assignments.'}</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  `;
+}
+
+function setRaci(tab,a,r,val){
+  const k=key(a,r);
+  if(val) state[tab].assignments[k]=val;
+  else delete state[tab].assignments[k];
+  render(tab);
+}
+
+function addActivity(){
+  const n=state.lab.activities.length+1;
+  state.lab.activities.push({id:"la"+Date.now()+Math.random(),name:"Activity "+n,desc:""});
+  render("lab");
+}
+function addRole(){
+  const n=state.lab.roles.length+1;
+  state.lab.roles.push({id:"lr"+Date.now()+Math.random(),name:"Role "+n,desc:""});
+  render("lab");
+}
+
+function clearAssignments(tab){
+  if(confirm("Clear all RACI assignments?")){
+    state[tab].assignments={};
+    render(tab);
+  }
+}
+
+function resetProject(tab){
+  if(!confirm("Reset this RACI workspace?"))return;
+  if(tab==="seminar"){
+    state.seminar.activities=seminarActivities.map((name,i)=>({id:"sa"+i,name,desc:""}));
+    state.seminar.roles=seminarRoles.map((r,i)=>({id:"sr"+i,name:r[0],desc:r[1]}));
+    state.seminar.assignments={};
+    state.seminar.student="";
+  }else{
+    state.lab={
+      title:"My Project",
+      objective:"Build a clear RACI matrix for your own project.",
+      student:"",
+      activities:[
+        {id:"la1",name:"Activity 1",desc:""},
+        {id:"la2",name:"Activity 2",desc:""}
+      ],
+      roles:[
+        {id:"lr1",name:"Project Manager",desc:""},
+        {id:"lr2",name:"Team Member",desc:""}
+      ],
+      assignments:{}
+    };
+  }
+  render(tab);
+}
+
+function openEdit(tab,type,id){
+  editing={tab,type,id};
+  const item=state[tab][type==="role"?"roles":"activities"].find(x=>x.id===id);
+  document.getElementById("editTitle").textContent=type==="role"?"Edit role":"Edit activity";
+  document.getElementById("editName").value=item.name;
+  document.getElementById("editDesc").value=item.desc||"";
+  document.getElementById("editModal").classList.add("open");
+}
+function closeEdit(){
+  document.getElementById("editModal").classList.remove("open");
+  editing=null;
+}
+function applyEdit(){
+  if(!editing)return;
+  const list=state[editing.tab][editing.type==="role"?"roles":"activities"];
+  const item=list.find(x=>x.id===editing.id);
+  item.name=document.getElementById("editName").value.trim()||item.name;
+  item.desc=document.getElementById("editDesc").value.trim();
+  const tab=editing.tab;
+  closeEdit();
+  render(tab);
+}
+
+function saveAll(){
+  localStorage.setItem("raciLabState",JSON.stringify(state));
+  alert("Saved in this browser.");
+}
+function loadAll(){
+  const raw=localStorage.getItem("raciLabState");
+  if(!raw){alert("No saved RACI project found in this browser.");return;}
+  try{
+    const parsed=JSON.parse(raw);
+    Object.assign(state,parsed);
+    render(currentTab);
+  }catch(e){
+    alert("Saved data could not be loaded.");
+  }
+}
+
+render("seminar");
+render("lab");
+</script>
+</body>
+</html>
